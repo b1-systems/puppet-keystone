@@ -46,13 +46,20 @@ class Puppet::Provider::Keystone < Puppet::Provider
     self.class.tenant_hash
   end
 
+  def self.reset
+    @admin_endpoint = nil
+    @tenant_hash    = nil
+    @admin_token    = nil
+    @keystone_file  = nil
+  end
+
   def self.auth_keystone(*args)
     begin
-      keystone('--token', admin_token, '--endpoint', admin_endpoint, args)
+      remove_warnings(keystone('--token', admin_token, '--endpoint', admin_endpoint, args))
     rescue Exception => e
-      if e.message =~ /\(HTTP 400\)/
+      if (e.message =~ /\[Errno 111\] Connection refused/) or  (e.message =~ /\(HTTP 400\)/)
        sleep 10
-       keystone('--token', admin_token, '--endpoint', admin_endpoint, args)
+       remove_warnings(keystone('--token', admin_token, '--endpoint', admin_endpoint, args))
       else
         raise(e)
       end
@@ -80,6 +87,7 @@ class Puppet::Provider::Keystone < Puppet::Provider
       end
       list
     end
+
     def self.get_keystone_object(type, id, attr)
       id = id.chomp
       auth_keystone("#{type}-get", id).split(/\|\n/m).each do |line|
@@ -94,5 +102,25 @@ class Puppet::Provider::Keystone < Puppet::Provider
         end
       end
       raise(Puppet::Error, "Could not find colummn #{attr} when getting #{type} #{id}")
+    end
+
+    # remove warning from the output. this is a temporary hack until
+    # I refactor things to use the the rest API
+    def self.remove_warnings(results)
+      found_header = false
+      results.split("\n").collect do |line|
+        unless found_header
+          if line =~ /^\+-+\+-+\+$/
+            found_header = true
+            line
+          elsif line =~ /^WARNING/
+            nil
+          else
+            line
+          end
+        else
+          line
+        end
+      end.compact.join("\n")
     end
 end
