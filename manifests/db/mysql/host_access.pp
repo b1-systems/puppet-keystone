@@ -6,13 +6,13 @@ define keystone::db::mysql::host_access(
 
   database_user { "${user}@${name}":
     password_hash => mysql_password($password),
-    provider      => 'mysql',
+    provider => $::dtagcloud::params::db_provider,
     require       => Database[$database],
   }
   database_grant { "${user}@${name}/${database}":
     # TODO figure out which privileges to grant.
     privileges => 'all',
-    provider   => 'mysql',
+    provider => $::dtagcloud::params::db_provider,
     require    => Database_user["${user}@${name}"]
   }
 
