@@ -64,8 +64,21 @@
 #     Optional. Default to true.
 #
 #   [enabled] If the keystone services should be enabled. Optional. Default to true.
-#   [sql_connection] Url used to connect to database.
-#   [idle_timeout] Timeout when db connections should be reaped.
+#
+#   [*database_connection*]
+#     (optional) Url used to connect to database.
+#     Defaults to sqlite:////var/lib/keystone/keystone.db
+#
+#   [*sql_connection*]
+#     (optional) Deprecated. Use database_connection instead.
+#
+#   [*database_idle_timeout*]
+#     (optional) Timeout when db connections should be reaped.
+#     Defaults to 200.
+#
+#   [*idle_timeout*]
+#     (optional) Deprecated. Use database_idle_timeout instead.
+#
 #   [enable_pki_setup] Enable call to pki_setup.
 #   [rabbit_host] Location of rabbitmq installation. Optional. Defaults to localhost.
 #   [rabbit_port] Port for rabbitmq instance. Optional. Defaults to 5672.
@@ -244,8 +257,8 @@ class keystone(
   $debug_cache_backend     = false,
   $token_caching           = true,
   $enabled                 = true,
-  $sql_connection          = 'sqlite:////var/lib/keystone/keystone.db',
-  $idle_timeout            = '200',
+  $database_connection     = 'sqlite:////var/lib/keystone/keystone.db',
+  $database_idle_timeout   = '200',
   $database_min_pool_size  = '1',
   $database_max_pool_size  = '10',
   $database_max_retries    = '10',
@@ -270,11 +283,28 @@ class keystone(
   $validate_service        = false,
   $validate_insecure       = false,
   $validate_cacert         = undef,
-  $service_provider        = $::keystone::params::service_provider
+  $service_provider        = $::keystone::params::service_provider,
+  # DEPRECATED PARAMETERS
+  $sql_connection          = undef,
+  $idle_timeout            = undef,
 ) {
 
   if ! $catalog_driver {
     validate_re($catalog_type, 'template|sql')
+  }
+
+  if $sql_connection {
+    warning('The sql_connection parameter is deprecated, use database_connection instead.')
+    $database_connection_real = $sql_connection
+  } else {
+    $database_connection_real = $database_connection
+  }
+
+  if $idle_timeout {
+    warning('The idle_timeout parameter is deprecated, use database_idle_timeout instead.')
+    $database_idle_timeout_real = $idle_timeout
+  } else {
+    $database_idle_timeout_real = $database_idle_timeout
   }
 
   File['/etc/keystone/keystone.conf'] -> Keystone_config<||> ~> Service['keystone']
@@ -400,19 +430,19 @@ class keystone(
     }
   }
 
-  if($sql_connection =~ /mysql:\/\/\S+:\S+@\S+\/\S+/) {
+  if($database_connection_real =~ /mysql:\/\/\S+:\S+@\S+\/\S+/) {
     if ($mysql_module >= 2.2) {
       require 'mysql::bindings'
       require 'mysql::bindings::python'
     } else {
       require 'mysql::python'
     }
-  } elsif($sql_connection =~ /postgresql:\/\/\S+:\S+@\S+\/\S+/) {
+  } elsif($database_connection_real =~ /postgresql:\/\/\S+:\S+@\S+\/\S+/) {
 
-  } elsif($sql_connection =~ /sqlite:\/\//) {
+  } elsif($database_connection_real =~ /sqlite:\/\//) {
 
   } else {
-    fail("Invalid db connection ${sql_connection}")
+    fail("Invalid db connection ${database_connection_real}")
   }
 
   # memcache connection config
@@ -449,8 +479,8 @@ class keystone(
 
   # db connection config
   keystone_config {
-    'database/connection':     value => $sql_connection, secret => true;
-    'database/idle_timeout':   value => $idle_timeout;
+    'database/connection':     value => $database_connection_real, secret => true;
+    'database/idle_timeout':   value => $database_idle_timeout_real;
     'database/min_pool_size':  value => $database_min_pool_size;
     'database/max_pool_size':  value => $database_max_pool_size;
     'database/max_retries':    value => $database_max_retries;
