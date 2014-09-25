@@ -138,50 +138,55 @@
 #
 class keystone(
   $admin_token,
-  $package_ensure        = 'present',
-  $bind_host             = false,
-  $public_bind_host      = '0.0.0.0',
-  $admin_bind_host       = '0.0.0.0',
-  $public_port           = '5000',
-  $admin_port            = '35357',
-  $compute_port          = '8774',
-  $verbose               = false,
-  $debug                 = false,
-  $log_dir               = '/var/log/keystone',
-  $log_file              = false,
-  $use_syslog            = false,
-  $log_facility          = 'LOG_USER',
-  $catalog_type          = 'sql',
-  $catalog_driver        = false,
-  $catalog_template_file = '/etc/keystone/default_catalog.templates',
-  $token_format          = false,
-  $token_provider        = 'keystone.token.providers.pki.Provider',
-  $token_driver          = 'keystone.token.backends.sql.Token',
-  $token_expiration      = 3600,
-  $public_endpoint       = false,
-  $admin_endpoint        = false,
-  $enable_ssl            = false,
-  $ssl_certfile          = '/etc/keystone/ssl/certs/keystone.pem',
-  $ssl_keyfile           = '/etc/keystone/ssl/private/keystonekey.pem',
-  $ssl_ca_certs          = '/etc/keystone/ssl/certs/ca.pem',
-  $ssl_ca_key            = '/etc/keystone/ssl/private/cakey.pem',
-  $ssl_cert_subject      = '/C=US/ST=Unset/L=Unset/O=Unset/CN=localhost',
-  $cache_dir             = '/var/cache/keystone',
-  $memcache_servers      = false,
-  $enabled               = true,
-  $sql_connection        = 'sqlite:////var/lib/keystone/keystone.db',
-  $idle_timeout          = '200',
-  $enable_pki_setup      = true,
-  $mysql_module          = '0.9',
-  $rabbit_host           = 'localhost',
-  $rabbit_hosts          = false,
-  $rabbit_password       = 'guest',
-  $rabbit_port           = '5672',
-  $rabbit_userid         = 'guest',
-  $rabbit_virtual_host   = '/',
-  $notification_driver   = false,
-  $notification_topics   = false,
-  $control_exchange      = false
+  $package_ensure          = 'present',
+  $bind_host               = false,
+  $public_bind_host        = '0.0.0.0',
+  $admin_bind_host         = '0.0.0.0',
+  $public_port             = '5000',
+  $admin_port              = '35357',
+  $compute_port            = '8774',
+  $verbose                 = false,
+  $debug                   = false,
+  $log_dir                 = '/var/log/keystone',
+  $log_file                = false,
+  $use_syslog              = false,
+  $log_facility            = 'LOG_USER',
+  $catalog_type            = 'sql',
+  $catalog_driver          = false,
+  $catalog_template_file   = '/etc/keystone/default_catalog.templates',
+  $token_format            = false,
+  $token_provider          = 'keystone.token.providers.pki.Provider',
+  $token_driver            = 'keystone.token.backends.sql.Token',
+  $token_expiration        = 3600,
+  $public_endpoint         = false,
+  $admin_endpoint          = false,
+  $enable_ssl              = false,
+  $ssl_certfile            = '/etc/keystone/ssl/certs/keystone.pem',
+  $ssl_keyfile             = '/etc/keystone/ssl/private/keystonekey.pem',
+  $ssl_ca_certs            = '/etc/keystone/ssl/certs/ca.pem',
+  $ssl_ca_key              = '/etc/keystone/ssl/private/cakey.pem',
+  $ssl_cert_subject        = '/C=US/ST=Unset/L=Unset/O=Unset/CN=localhost',
+  $cache_dir               = '/var/cache/keystone',
+  $memcache_servers        = false,
+  $enabled                 = true,
+  $sql_connection          = 'sqlite:////var/lib/keystone/keystone.db',
+  $idle_timeout            = '200',
+  $database_min_pool_size  = '1',
+  $database_max_pool_size  = '10',
+  $database_max_retries    = '10',
+  $database_retry_interval = '10',
+  $database_max_overflow   = '30',
+  $enable_pki_setup        = true,
+  $mysql_module            = '0.9',
+  $rabbit_host             = 'localhost',
+  $rabbit_hosts            = false,
+  $rabbit_password         = 'guest',
+  $rabbit_port             = '5672',
+  $rabbit_userid           = 'guest',
+  $rabbit_virtual_host     = '/',
+  $notification_driver     = false,
+  $notification_topics     = false,
+  $control_exchange        = false
 ) {
 
   if ! $catalog_driver {
@@ -321,8 +326,13 @@ class keystone(
 
   # db connection config
   keystone_config {
-    'database/connection':   value => $sql_connection, secret => true;
-    'database/idle_timeout': value => $idle_timeout;
+    'database/connection':     value => $sql_connection, secret => true;
+    'database/idle_timeout':   value => $idle_timeout;
+    'database/min_pool_size':  value => $database_min_pool_size;
+    'database/max_pool_size':  value => $database_max_pool_size;
+    'database/max_retries':    value => $database_max_retries;
+    'database/retry_interval': value => $database_retry_interval;
+    'database/max_overflow':   value => $database_max_overflow;
   }
 
   # configure based on the catalog backend
