@@ -36,8 +36,33 @@
 #   [token_format] Deprecated: Use token_provider instead.
 #   [cache_dir] Directory created when token_provider is pki. Optional.
 #     Defaults to /var/cache/keystone.
-#   [memcache_servers] List of memcache servers/ports. Optional. Used with
-#     token_driver keystone.token.backends.memcache.Token.  Defaults to false.
+#
+#   [memcache_servers]
+#     List of memcache servers in format of server:port.
+#     Used with token_driver 'keystone.token.backends.memcache.Token'.
+#     Optional. Defaults to false. Example: ['localhost:11211']
+#
+#   [cache_backend]
+#     Dogpile.cache backend module. It is recommended that Memcache with pooling
+#     (keystone.cache.memcache_pool) or Redis (dogpile.cache.redis) be used in production.
+#     This has no effects unless 'memcache_servers' is set.
+#     Optional. Defaults to 'keystone.common.cache.noop'
+#
+#   [cache_backend_argument]
+#     List of arguments in format of argname:value supplied to the backend module.
+#     Specify this option once per argument to be passed to the dogpile.cache backend.
+#     This has no effects unless 'memcache_servers' is set.
+#     Optional. Default to undef.
+#
+#   [debug_cache_backend]
+#     Extra debugging from the cache backend (cache keys, get/set/delete calls).
+#     This has no effects unless 'memcache_servers' is set.
+#     Optional. Default to false.
+#
+#   [token_caching]
+#     Toggle for token system caching. This has no effects unless 'memcache_servers' is set.
+#     Optional. Default to true.
+#
 #   [enabled] If the keystone services should be enabled. Optional. Default to true.
 #   [sql_connection] Url used to connect to database.
 #   [idle_timeout] Timeout when db connections should be reaped.
@@ -168,6 +193,10 @@ class keystone(
   $ssl_cert_subject        = '/C=US/ST=Unset/L=Unset/O=Unset/CN=localhost',
   $cache_dir               = '/var/cache/keystone',
   $memcache_servers        = false,
+  $cache_backend           = 'keystone.common.cache.noop',
+  $cache_backend_argument  = undef,
+  $debug_cache_backend     = false,
+  $token_caching           = true,
   $enabled                 = true,
   $sql_connection          = 'sqlite:////var/lib/keystone/keystone.db',
   $idle_timeout            = '200',
@@ -322,12 +351,32 @@ class keystone(
   # memcache connection config
   if $memcache_servers {
     validate_array($memcache_servers)
+    Service<| title == 'memcached' |> -> Service['keystone']
     keystone_config {
-      'memcache/servers': value => join($memcache_servers, ',');
+      'cache/enabled':              value => true;
+      'cache/backend':              value => $cache_backend;
+      'cache/debug_cache_backend':  value => $debug_cache_backend;
+      'token/caching':              value => $token_caching;
+      'memcache/servers':           value => join($memcache_servers, ',');
+    }
+    if $cache_backend_argument {
+      validate_array($cache_backend_argument)
+      keystone_config {
+        'cache/backend_argument':   value => join($cache_backend_argument, ',');
+      }
+    } else {
+      keystone_config {
+        'cache/backend_argument':  ensure => absent;
+      }
     }
   } else {
     keystone_config {
-      'memcache/servers': ensure => absent;
+      'cache/enabled':             ensure => absent;
+      'cache/backend':             ensure => absent;
+      'cache/backend_argument':    ensure => absent;
+      'cache/debug_cache_backend': ensure => absent;
+      'token/caching':             ensure => absent;
+      'memcache/servers':          ensure => absent;
     }
   }
 
