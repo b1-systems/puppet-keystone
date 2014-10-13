@@ -212,10 +212,16 @@ describe 'keystone' do
 
     it do
       expect {
-        should contain_service('keystone')
+        should contain_service('keystone').with('ensure' => 'running')
       }.to raise_error(RSpec::Expectations::ExpectationNotMetError, /expected that the catalogue would contain Service\[keystone\]/)
     end
 
+    it { should contain_class('keystone::service').with(
+      'ensure'          => 'stopped',
+      'service_name'    => 'keystone',
+      'enable'          => false,
+      'validate'        => false
+    )}
   end
 
   describe 'with deprecated sql_connection parameter' do

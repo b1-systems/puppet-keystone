@@ -696,6 +696,14 @@ class keystone(
         validate     => false,
       }
     }
+  } elsif $service_name == 'httpd' {
+    class { 'keystone::service':
+      ensure       => 'stopped',
+      service_name => $::keystone::params::service_name,
+      enable       => false,
+      provider     => $service_provider,
+      validate     => false,
+    }
   }
 
   if $enabled {
