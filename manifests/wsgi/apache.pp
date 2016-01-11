@@ -55,6 +55,15 @@
 #     apache::vhost ssl parameters.
 #     Optional. Default to apache::vhost 'ssl_*' defaults.
 #
+#   [*wsgi_application_group*]
+#     (optional) The application group of the WSGI script.
+#     Defaults to '%{GLOBAL}'
+#
+#   [*wsgi_pass_authorization*]
+#     (optional) Whether HTTP authorisation headers are passed through to a WSGI
+#     script when the equivalent HTTP request headers are present.
+#     Defaults to 'On'
+#
 # == Dependencies
 #
 #   requires Class['apache'] & Class['keystone']
@@ -79,23 +88,25 @@
 #   Copyright 2013 eNovance <licensing@enovance.com>
 #
 class keystone::wsgi::apache (
-  $servername    = $::fqdn,
-  $public_port   = 5000,
-  $admin_port    = 35357,
-  $bind_host     = undef,
-  $public_path   = '/',
-  $admin_path    = '/',
-  $ssl           = true,
-  $workers       = 1,
-  $ssl_cert      = undef,
-  $ssl_key       = undef,
-  $ssl_chain     = undef,
-  $ssl_ca        = undef,
-  $ssl_crl_path  = undef,
-  $ssl_crl       = undef,
-  $ssl_certs_dir = undef,
-  $threads       = $::processorcount,
-  $priority      = '10',
+  $servername              = $::fqdn,
+  $public_port             = 5000,
+  $admin_port              = 35357,
+  $bind_host               = undef,
+  $public_path             = '/',
+  $admin_path              = '/',
+  $ssl                     = true,
+  $workers                 = 1,
+  $ssl_cert                = undef,
+  $ssl_key                 = undef,
+  $ssl_chain               = undef,
+  $ssl_ca                  = undef,
+  $ssl_crl_path            = undef,
+  $ssl_crl                 = undef,
+  $ssl_certs_dir           = undef,
+  $threads                 = $::processorcount,
+  $priority                = '10',
+  $wsgi_application_group  = '%{GLOBAL}',
+  $wsgi_pass_authorization = 'On',
 ) {
 
   include ::keystone::params
@@ -191,6 +202,8 @@ class keystone::wsgi::apache (
     wsgi_daemon_process_options => $wsgi_daemon_process_options,
     wsgi_process_group          => 'keystone_main',
     wsgi_script_aliases         => $wsgi_script_aliases_main_real,
+    wsgi_application_group      => $wsgi_application_group,
+    wsgi_pass_authorization     => $wsgi_pass_authorization,
     require                     => File['keystone_wsgi_main'],
   }
 
@@ -216,6 +229,8 @@ class keystone::wsgi::apache (
       wsgi_daemon_process_options => $wsgi_daemon_process_options,
       wsgi_process_group          => 'keystone_admin',
       wsgi_script_aliases         => $wsgi_script_aliases_admin,
+      wsgi_application_group      => $wsgi_application_group,
+      wsgi_pass_authorization     => $wsgi_pass_authorization,
       require                     => File['keystone_wsgi_admin'],
     }
   }

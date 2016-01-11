@@ -84,6 +84,8 @@ describe 'keystone::wsgi::apache' do
         'wsgi_daemon_process'         => 'keystone_admin',
         'wsgi_process_group'          => 'keystone_admin',
         'wsgi_script_aliases'         => { '/' => "#{platform_parameters[:wsgi_script_path]}/admin" },
+        'wsgi_application_group'      => '%{GLOBAL}',
+        'wsgi_pass_authorization'     => 'On',
         'require'                     => 'File[keystone_wsgi_admin]'
       )}
 
@@ -98,6 +100,8 @@ describe 'keystone::wsgi::apache' do
         'wsgi_daemon_process'         => 'keystone_main',
         'wsgi_process_group'          => 'keystone_main',
         'wsgi_script_aliases'         => { '/' => "#{platform_parameters[:wsgi_script_path]}/main" },
+        'wsgi_application_group'      => '%{GLOBAL}',
+        'wsgi_pass_authorization'     => 'On',
         'require'                     => 'File[keystone_wsgi_main]'
       )}
       it { should contain_file(get_concat_name('keystone_wsgi_main')).with_content(
@@ -132,6 +136,8 @@ describe 'keystone::wsgi::apache' do
         'wsgi_daemon_process'         => 'keystone_admin',
         'wsgi_process_group'          => 'keystone_admin',
         'wsgi_script_aliases'         => { '/' => "#{platform_parameters[:wsgi_script_path]}/admin" },
+        'wsgi_application_group'      => '%{GLOBAL}',
+        'wsgi_pass_authorization'     => 'On',
         'require'                     => 'File[keystone_wsgi_admin]'
       )}
 
@@ -146,6 +152,8 @@ describe 'keystone::wsgi::apache' do
         'wsgi_daemon_process'         => 'keystone_main',
         'wsgi_process_group'          => 'keystone_main',
         'wsgi_script_aliases'         => { '/' => "#{platform_parameters[:wsgi_script_path]}/main" },
+        'wsgi_application_group'      => '%{GLOBAL}',
+        'wsgi_pass_authorization'     => 'On',
         'require'                     => 'File[keystone_wsgi_main]'
       )}
       it { should contain_file(get_concat_name('keystone_wsgi_main')).with_content(
@@ -186,6 +194,8 @@ describe 'keystone::wsgi::apache' do
         '/main/endpoint'  => "#{platform_parameters[:wsgi_script_path]}/main",
         '/admin/endpoint' => "#{platform_parameters[:wsgi_script_path]}/admin"
         },
+        'wsgi_application_group'      => '%{GLOBAL}',
+        'wsgi_pass_authorization'     => 'On',
         'require'                     => 'File[keystone_wsgi_main]'
       )}
       it { should contain_file(get_concat_name('keystone_wsgi_main')).with_content(
